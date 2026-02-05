@@ -1,0 +1,32 @@
+[package]
+name = "kraven"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Environment profile manager for named environment variable profiles"
+license = "GPL-3.0"
+repository = "https://github.com/tilacog/kraven"
+homepage = "https://github.com/tilacog/kraven"
+documentation = "https://docs.rs/kraven"
+readme = "README.md"
+authors = ["tilacog"]
+keywords = ["environment", "dotenv", "cli", "profile", "env"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [
+    ".github/",
+    "justfile",
+]
+
+[[bin]]
+name = "kraven"
+path = "src/main.rs"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4"
+anyhow = "1"
+dirs = "5"

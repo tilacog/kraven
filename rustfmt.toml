@@ -1,0 +1,15 @@
+# Rustfmt configuration for kraven
+# See https://rust-lang.github.io/rustfmt/ for options
+
+edition = "2021"
+
+# Line width
+max_width = 100
+use_small_heuristics = "Default"
+
+# Spacing
+newline_style = "Unix"
+
+# Misc
+use_field_init_shorthand = true
+use_try_shorthand = true
