@@ -1,4 +1,4 @@
-//! kraven - Environment profile manager for named environment variable profiles.
+//! kraven - Manage named environment variable profiles.
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -8,10 +8,10 @@ mod completions;
 mod config;
 mod profile;
 
-/// CLI for managing environment variable profiles.
+/// CLI for managing named environment variable profiles.
 #[derive(Parser)]
 #[command(name = "kraven")]
-#[command(author, version, about = "Environment profile manager")]
+#[command(author, version, about = "Manage named environment variable profiles")]
 #[command(arg_required_else_help = true)]
 pub struct Cli {
     #[command(subcommand)]

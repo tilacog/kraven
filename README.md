@@ -1,6 +1,6 @@
 # kraven
 
-Environment profile manager for named environment variable profiles.
+Manage named environment variable profiles.
 
 ## Installation
 
@@ -38,6 +38,23 @@ kraven remove my-profile
 # Show shell completion setup instructions
 kraven completions
 ```
+
+## Shell Completions
+
+Enable tab completion by adding the appropriate line to your shell config:
+
+```bash
+# Bash (~/.bashrc)
+source <(COMPLETE=bash kraven)
+
+# Zsh (~/.zshrc)
+source <(COMPLETE=zsh kraven)
+
+# Fish (~/.config/fish/config.fish)
+COMPLETE=fish kraven | source
+```
+
+Then restart your shell or source the config file.
 
 ## Profile Format
 
