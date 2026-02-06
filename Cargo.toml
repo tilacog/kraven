@@ -1,6 +1,6 @@
 [package]
 name = "kraven"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Environment profile manager for named environment variable profiles"
@@ -27,6 +27,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-clap_complete = "4"
+clap_complete = { version = "4", features = ["unstable-dynamic"] }
 anyhow = "1"
 dirs = "5"

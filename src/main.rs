@@ -2,9 +2,9 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use clap_complete::Shell;
 
 mod commands;
+mod completions;
 mod config;
 mod profile;
 
@@ -63,19 +63,13 @@ enum Commands {
     /// Show the currently active profile
     Current,
 
-    /// Generate shell completions
-    Completions {
-        /// Shell to generate completions for
-        #[arg(value_enum)]
-        shell: Shell,
-    },
-
-    /// List profile names for shell completion (hidden)
-    #[command(hide = true)]
-    CompleteProfiles,
+    /// Print shell completion setup instructions
+    Completions,
 }
 
 fn main() -> Result<()> {
+    completions::init();
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -86,7 +80,6 @@ fn main() -> Result<()> {
         Commands::Show { profile, mask } => commands::show::run(&profile, mask),
         Commands::Remove { profile, force } => commands::remove::run(&profile, force),
         Commands::Current => commands::current::run(),
-        Commands::Completions { shell } => commands::completions::run(shell),
-        Commands::CompleteProfiles => commands::completions::list_profiles(),
+        Commands::Completions => commands::completions::run(),
     }
 }

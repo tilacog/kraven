@@ -35,10 +35,8 @@ kraven deactivate
 # Remove a profile
 kraven remove my-profile
 
-# Generate shell completions
-kraven completions bash > ~/.local/share/bash-completion/completions/kraven
-kraven completions zsh > ~/.zfunc/_kraven
-kraven completions fish > ~/.config/fish/completions/kraven.fish
+# Show shell completion setup instructions
+kraven completions
 ```
 
 ## Profile Format

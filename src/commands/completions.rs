@@ -1,48 +1,29 @@
 use anyhow::Result;
-use clap::CommandFactory;
-use clap_complete::{generate, Shell};
-use std::fs;
-use std::io;
 
-use crate::config::get_profile_dir;
-use crate::Cli;
+/// Print shell completion setup instructions for all supported shells.
+#[allow(clippy::unnecessary_wraps)]
+pub fn run() -> Result<()> {
+    println!("Add one of the following lines to your shell configuration:\n");
 
-#[allow(clippy::unnecessary_wraps)] // Consistent return type with other commands
-pub fn run(shell: Shell) -> Result<()> {
-    let mut cmd = Cli::command();
-    let name = cmd.get_name().to_string();
-    generate(shell, &mut cmd, name, &mut io::stdout());
-    Ok(())
-}
+    println!("Bash (~/.bashrc):");
+    println!("  source <(COMPLETE=bash kraven)\n");
 
-/// List profile names for shell completion (one per line).
-pub fn list_profiles() -> Result<()> {
-    let profile_dir = get_profile_dir()?;
+    println!("Elvish (~/.elvish/rc.elv):");
+    println!("  eval (E:COMPLETE=elvish kraven | slurp)\n");
 
-    if !profile_dir.exists() {
-        return Ok(());
-    }
+    println!("Fish (~/.config/fish/config.fish):");
+    println!("  COMPLETE=fish kraven | source\n");
 
-    let mut profiles: Vec<String> = fs::read_dir(&profile_dir)?
-        .flatten()
-        .filter_map(|entry| {
-            let path = entry.path();
-            if !path.is_file() {
-                return None;
-            }
-            let name = path.file_name()?.to_str()?;
-            if name.starts_with('.') {
-                return None;
-            }
-            Some(name.to_string())
-        })
-        .collect();
+    println!("PowerShell ($PROFILE):");
+    println!(
+        "  $env:COMPLETE = \"powershell\"; kraven | Out-String | Invoke-Expression; \
+         Remove-Item Env:\\COMPLETE\n"
+    );
 
-    profiles.sort();
+    println!("Zsh (~/.zshrc):");
+    println!("  source <(COMPLETE=zsh kraven)\n");
 
-    for profile in profiles {
-        println!("{profile}");
-    }
+    println!("Then restart your shell or source the config file.");
 
     Ok(())
 }
