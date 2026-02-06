@@ -56,6 +56,56 @@ COMPLETE=fish kraven | source
 
 Then restart your shell or source the config file.
 
+## Customizing Your Shell Prompt
+
+When a profile is active, Kraven sets the `KRAVEN_ACTIVE` environment variable to the profile name. You can use this to display the active profile in your shell prompt.
+
+### Zsh
+
+Add this to your `~/.zshrc`:
+
+```zsh
+precmd() {
+    if [[ -n "$KRAVEN_ACTIVE" ]]; then
+        kraven_info="[${KRAVEN_ACTIVE}] "
+    else
+        kraven_info=""
+    fi
+}
+
+setopt PROMPT_SUBST
+PROMPT='${kraven_info}%~ %# '
+```
+
+### Bash
+
+Add this to your `~/.bashrc`:
+
+```bash
+set_prompt() {
+    if [[ -n "$KRAVEN_ACTIVE" ]]; then
+        kraven_info="[${KRAVEN_ACTIVE}] "
+    else
+        kraven_info=""
+    fi
+    PS1="${kraven_info}\w \$ "
+}
+PROMPT_COMMAND=set_prompt
+```
+
+### Fish
+
+Add this to your `~/.config/fish/config.fish` or create `~/.config/fish/functions/fish_prompt.fish`:
+
+```fish
+function fish_prompt
+    if set -q KRAVEN_ACTIVE
+        echo -n "[$KRAVEN_ACTIVE] "
+    end
+    echo -n (prompt_pwd) '> '
+end
+```
+
 ## Profile Format
 
 Profiles are stored as plain text files in `~/.config/kraven/` using the standard dotenv format:
