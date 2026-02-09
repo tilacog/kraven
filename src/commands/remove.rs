@@ -1,17 +1,17 @@
-use anyhow::{bail, Context, Result};
 use std::fs;
 use std::io::{self, Write};
 
-use crate::config::{get_profile_path, KRAVEN_ACTIVE};
+use anyhow::{bail, Context, Result};
+
+use crate::config::{resolve_profile_path, KRAVEN_ACTIVE};
 
 pub fn run(profile_name: &str, force: bool) -> Result<()> {
-    let profile_path = get_profile_path(profile_name)?;
+    let profile_path = resolve_profile_path(profile_name)?;
 
     if !profile_path.exists() {
         bail!("Profile '{profile_name}' does not exist.");
     }
 
-    // Warn if removing the currently active profile
     if let Ok(active) = std::env::var(KRAVEN_ACTIVE) {
         if active == profile_name {
             eprintln!("Warning: '{profile_name}' is the currently active profile.");

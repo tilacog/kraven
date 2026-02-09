@@ -1,10 +1,10 @@
 use anyhow::Result;
 
-use crate::config::get_profile_path;
+use crate::config::resolve_profile_path;
 use crate::profile::Profile;
 
 pub fn run(profile_name: &str, mask_values: bool) -> Result<()> {
-    let profile_path = get_profile_path(profile_name)?;
+    let profile_path = resolve_profile_path(profile_name)?;
     let profile = Profile::load(profile_name, &profile_path)?;
 
     if profile.vars.is_empty() {
@@ -12,7 +12,6 @@ pub fn run(profile_name: &str, mask_values: bool) -> Result<()> {
         return Ok(());
     }
 
-    // BTreeMap maintains sorted order, so no explicit sorting needed
     for (key, value) in &profile.vars {
         if mask_values {
             println!("{key}={}", mask_value(value));

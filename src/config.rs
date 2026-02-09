@@ -1,5 +1,6 @@
+use std::path::{Path, PathBuf};
+
 use anyhow::{bail, Context, Result};
-use std::path::PathBuf;
 
 /// Environment variable marking an active kraven session.
 pub const KRAVEN_ACTIVE: &str = "KRAVEN_ACTIVE";
@@ -39,11 +40,30 @@ pub fn get_profile_dir() -> Result<PathBuf> {
     Ok(config_dir.join(DEFAULT_PROFILE_SUBDIR))
 }
 
-/// Returns the full path to a profile file, validating the profile name.
-pub fn get_profile_path(profile_name: &str) -> Result<PathBuf> {
-    validate_profile_name(profile_name)?;
+/// Strips a trailing `.gpg` extension so users can pass either `name` or `name.gpg`.
+fn normalize_profile_name(name: &str) -> &str {
+    name.strip_suffix(".gpg").unwrap_or(name)
+}
+
+/// Resolves the profile path, preferring the encrypted `.gpg` variant if it exists.
+pub fn resolve_profile_path(profile_name: &str) -> Result<PathBuf> {
+    let (plain, gpg) = profile_paths(profile_name)?;
+    Ok(if gpg.exists() { gpg } else { plain })
+}
+
+/// Returns both the plain and encrypted paths for a profile, validating the name.
+pub fn profile_paths(profile_name: &str) -> Result<(PathBuf, PathBuf)> {
+    let name = normalize_profile_name(profile_name);
+    validate_profile_name(name)?;
     let profile_dir = get_profile_dir()?;
-    Ok(profile_dir.join(profile_name))
+    let plain = profile_dir.join(name);
+    let gpg = profile_dir.join(format!("{name}.gpg"));
+    Ok((plain, gpg))
+}
+
+/// Returns `true` if the path has a `.gpg` extension.
+pub fn is_encrypted(path: &Path) -> bool {
+    path.extension().is_some_and(|ext| ext == "gpg")
 }
 
 /// Ensures the profile directory exists, creating it if necessary.
@@ -97,5 +117,58 @@ mod tests {
         assert!(validate_profile_name("foo bar").is_err());
         assert!(validate_profile_name("foo;bar").is_err());
         assert!(validate_profile_name("$(whoami)").is_err());
+    }
+
+    #[test]
+    fn test_is_encrypted() {
+        use std::path::Path;
+        assert!(is_encrypted(Path::new("/some/path/profile.gpg")));
+        assert!(!is_encrypted(Path::new("/some/path/profile")));
+        assert!(!is_encrypted(Path::new("/some/path/profile.txt")));
+        assert!(!is_encrypted(Path::new("profile.gpg.bak")));
+    }
+
+    #[test]
+    fn test_resolve_profile_path_validates_name() {
+        assert!(resolve_profile_path("").is_err());
+        assert!(resolve_profile_path("..").is_err());
+        assert!(resolve_profile_path("foo/bar").is_err());
+    }
+
+    #[test]
+    fn test_profile_paths_validates_name() {
+        assert!(profile_paths("").is_err());
+        assert!(profile_paths("..").is_err());
+        assert!(profile_paths("foo/bar").is_err());
+    }
+
+    #[test]
+    fn test_profile_paths_returns_plain_and_gpg() {
+        let (plain, gpg) = profile_paths("test-profile").unwrap();
+        assert!(plain.ends_with("test-profile"));
+        assert!(gpg.ends_with("test-profile.gpg"));
+        assert_eq!(plain.parent(), gpg.parent());
+    }
+
+    #[test]
+    fn test_resolve_profile_path_returns_plain_for_valid_name() {
+        let path = resolve_profile_path("some-profile").unwrap();
+        assert!(path.ends_with("some-profile"));
+        assert!(!path.to_string_lossy().ends_with(".gpg"));
+    }
+
+    #[test]
+    fn test_normalize_strips_gpg_suffix() {
+        assert_eq!(normalize_profile_name("my-profile.gpg"), "my-profile");
+        assert_eq!(normalize_profile_name("my-profile"), "my-profile");
+        assert_eq!(normalize_profile_name("a.b.gpg"), "a.b");
+    }
+
+    #[test]
+    fn test_profile_paths_normalizes_gpg_suffix() {
+        let (plain_a, gpg_a) = profile_paths("test-profile").unwrap();
+        let (plain_b, gpg_b) = profile_paths("test-profile.gpg").unwrap();
+        assert_eq!(plain_a, plain_b);
+        assert_eq!(gpg_a, gpg_b);
     }
 }

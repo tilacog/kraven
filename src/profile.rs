@@ -1,9 +1,14 @@
-use anyhow::{bail, Context, Result};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
-#[derive(Debug, Clone)]
+use anyhow::{bail, Context, Result};
+use zeroize::{Zeroize, Zeroizing};
+
+use crate::config;
+
+#[derive(Debug)]
 pub struct Profile {
     pub vars: BTreeMap<String, String>,
 }
@@ -16,11 +21,44 @@ impl Profile {
     }
 
     /// Load a profile from the given path.
+    ///
+    /// If the path has a `.gpg` extension, the file is decrypted via GPG first.
     pub fn load(name: &str, path: &Path) -> Result<Self> {
-        let content =
-            fs::read_to_string(path).with_context(|| format!("Failed to read profile '{name}'"))?;
+        let content: Zeroizing<String> = if config::is_encrypted(path) {
+            gpg_decrypt(path).with_context(|| format!("Failed to decrypt profile '{name}'"))?
+        } else {
+            Zeroizing::new(
+                fs::read_to_string(path)
+                    .with_context(|| format!("Failed to read profile '{name}'"))?,
+            )
+        };
         Self::parse(&content, path)
     }
+}
+
+impl Drop for Profile {
+    fn drop(&mut self) {
+        for value in self.vars.values_mut() {
+            value.zeroize();
+        }
+    }
+}
+
+fn gpg_decrypt(path: &Path) -> Result<Zeroizing<String>> {
+    let output = Command::new("gpg")
+        .args(["--quiet", "--batch", "--decrypt"])
+        .arg(path)
+        .output()
+        .context("Failed to run gpg")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        bail!("gpg decryption failed: {stderr}");
+    }
+
+    Ok(Zeroizing::new(
+        String::from_utf8(output.stdout).context("GPG output is not valid UTF-8")?,
+    ))
 }
 
 fn parse_env_file(content: &str, path: &Path) -> Result<BTreeMap<String, String>> {

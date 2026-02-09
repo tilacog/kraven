@@ -1,6 +1,6 @@
 [package]
 name = "kraven"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Manage named environment variable profiles"
@@ -17,16 +17,17 @@ exclude = [
     "justfile",
 ]
 
-[[bin]]
-name = "kraven"
-path = "src/main.rs"
-
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[[bin]]
+name = "kraven"
+path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 clap_complete = { version = "4", features = ["unstable-dynamic"] }
 anyhow = "1"
 dirs = "5"
+zeroize = "1.8.2"

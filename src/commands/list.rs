@@ -1,5 +1,7 @@
-use anyhow::{Context, Result};
+use std::collections::BTreeMap;
 use std::fs;
+
+use anyhow::{Context, Result};
 
 use crate::config::{get_profile_dir, KRAVEN_ACTIVE};
 
@@ -12,25 +14,36 @@ pub fn run() -> Result<()> {
         return Ok(());
     }
 
-    let mut profiles: Vec<String> = fs::read_dir(&profile_dir)
+    let mut profiles = BTreeMap::<String, bool>::new();
+
+    for entry in fs::read_dir(&profile_dir)
         .with_context(|| {
             format!(
                 "Failed to read profile directory: {}",
                 profile_dir.display()
             )
         })?
-        .filter_map(|entry| {
-            let path = entry.ok()?.path();
-            if !path.is_file() {
-                return None;
-            }
-            let name = path.file_name()?.to_str()?;
-            if name.starts_with('.') {
-                return None;
-            }
-            Some(name.to_string())
-        })
-        .collect();
+        .flatten()
+    {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let Some(file_name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        if file_name.starts_with('.') {
+            continue;
+        }
+        let (name, encrypted) = match file_name.strip_suffix(".gpg") {
+            Some(n) => (n, true),
+            None => (file_name, false),
+        };
+        profiles
+            .entry(name.to_string())
+            .and_modify(|e| *e |= encrypted)
+            .or_insert(encrypted);
+    }
 
     if profiles.is_empty() {
         println!("No profiles found.");
@@ -38,16 +51,20 @@ pub fn run() -> Result<()> {
         return Ok(());
     }
 
-    profiles.sort();
-
-    // Check which profile is currently active
     let active = std::env::var(KRAVEN_ACTIVE).ok();
 
-    for profile in profiles {
-        if Some(&profile) == active.as_ref() {
-            println!("{profile} (active)");
+    for (name, encrypted) in &profiles {
+        let mut indicators = Vec::new();
+        if active.as_deref() == Some(name.as_str()) {
+            indicators.push("active");
+        }
+        if *encrypted {
+            indicators.push("encrypted");
+        }
+        if indicators.is_empty() {
+            println!("{name}");
         } else {
-            println!("{profile}");
+            println!("{name} ({})", indicators.join(", "));
         }
     }
 

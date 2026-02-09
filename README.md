@@ -35,6 +35,12 @@ kraven deactivate
 # Remove a profile
 kraven remove my-profile
 
+# Encrypt a profile with GPG
+kraven encrypt my-profile
+
+# Decrypt an encrypted profile
+kraven decrypt my-profile
+
 # Show shell completion setup instructions
 kraven completions
 ```
@@ -105,6 +111,30 @@ function fish_prompt
     echo -n (prompt_pwd) '> '
 end
 ```
+
+## GPG Encryption
+
+Profiles containing sensitive credentials can be encrypted with GPG. This requires GPG to be installed and a default key to be configured.
+
+```bash
+# Encrypt an existing profile (uses your default GPG key)
+kraven encrypt my-profile
+
+# Decrypt it back to plain text
+kraven decrypt my-profile
+```
+
+Encrypted profiles are stored as `<name>.gpg` files alongside plain profiles. All commands (`activate`, `show`, `edit`, `remove`, `list`) work transparently with encrypted profiles — decryption happens automatically when needed. You can refer to a profile by either its base name or with the `.gpg` suffix:
+
+```bash
+# These are equivalent
+kraven show my-profile
+kraven show my-profile.gpg
+```
+
+For editing encrypted profiles, your editor must handle GPG natively (e.g., Vim with the `gnupg.vim` plugin).
+
+`kraven list` shows an `(encrypted)` indicator next to encrypted profiles.
 
 ## Profile Format
 

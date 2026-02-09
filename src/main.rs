@@ -60,6 +60,18 @@ enum Commands {
         force: bool,
     },
 
+    /// Encrypt a profile with GPG
+    Encrypt {
+        /// Name of the profile to encrypt
+        profile: String,
+    },
+
+    /// Decrypt a GPG-encrypted profile
+    Decrypt {
+        /// Name of the profile to decrypt
+        profile: String,
+    },
+
     /// Show the currently active profile
     Current,
 
@@ -79,6 +91,8 @@ fn main() -> Result<()> {
         Commands::Edit { profile } => commands::edit::run(&profile),
         Commands::Show { profile, mask } => commands::show::run(&profile, mask),
         Commands::Remove { profile, force } => commands::remove::run(&profile, force),
+        Commands::Encrypt { profile } => commands::encrypt::run(&profile),
+        Commands::Decrypt { profile } => commands::decrypt::run(&profile),
         Commands::Current => commands::current::run(),
         Commands::Completions => commands::completions::run(),
     }

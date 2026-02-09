@@ -1,9 +1,10 @@
 //! Shell completion support using clap's dynamic completion system.
 
+use std::ffi::OsStr;
+
 use clap::CommandFactory;
 use clap_complete::engine::{ArgValueCompleter, CompletionCandidate};
 use clap_complete::CompleteEnv;
-use std::ffi::OsStr;
 
 use crate::config;
 use crate::Cli;
@@ -23,6 +24,8 @@ fn build_cli() -> clap::Command {
         .mut_subcommand("edit", add_profile_completer)
         .mut_subcommand("show", add_profile_completer)
         .mut_subcommand("remove", add_profile_completer)
+        .mut_subcommand("encrypt", add_profile_completer)
+        .mut_subcommand("decrypt", add_profile_completer)
 }
 
 /// Add profile completer to a subcommand's "profile" argument.
@@ -44,6 +47,8 @@ fn complete_profiles(current: &OsStr) -> Vec<CompletionCandidate> {
         return vec![];
     };
 
+    let mut seen = std::collections::HashSet::new();
+
     entries
         .flatten()
         .filter_map(|entry| {
@@ -51,11 +56,12 @@ fn complete_profiles(current: &OsStr) -> Vec<CompletionCandidate> {
             if !path.is_file() {
                 return None;
             }
-            let name = path.file_name()?.to_str()?;
-            if name.starts_with('.') {
+            let file_name = path.file_name()?.to_str()?;
+            if file_name.starts_with('.') {
                 return None;
             }
-            if name.starts_with(&*current_str) {
+            let name = file_name.strip_suffix(".gpg").unwrap_or(file_name);
+            if name.starts_with(&*current_str) && seen.insert(name.to_string()) {
                 Some(CompletionCandidate::new(name))
             } else {
                 None
